@@ -1,4 +1,6 @@
 import flet as ft
+from crono import Cronometro
+from datetime import datetime, timedelta
 
 class DashboardApp:
     def __init__(self, page: ft.Page):
@@ -15,24 +17,28 @@ class DashboardApp:
         self.page.window.width = 1200
         self.page.window.height = 800
         
-    def create_container(self, text: str, color: str, width: int = None, height: int = None, expand: bool = True):
+    def create_container(self, content, color: str, width: int = None, height: int = None, expand: bool = True):
         """Crea un contenedor con texto centrado"""
-        return ft.Container(
-            content=ft.Text(
-                text,
-                size=16,
+        # Si el contenido es una cadena, convertirla a ft.Text
+        if isinstance(content, str):
+            content = ft.Text(
+                content,
+                size=20,
                 weight=ft.FontWeight.BOLD,
-                color=ft.Colors.WHITE if color in [ft.Colors.RED_700, ft.Colors.GREEN_700] else ft.Colors.BLACK,
+                color=ft.Colors.WHITE,
                 text_align=ft.TextAlign.CENTER
-            ),
-            width=width,
-            height=height,
-            bgcolor=color,
-            border_radius=20,
-            alignment=ft.alignment.center,
-            padding=20,
-            expand=expand,
-        )
+            )
+        
+        return ft.Container(
+                content=content,
+                width=width,
+                height=height,
+                bgcolor=color,
+                border_radius=20,
+                alignment=ft.alignment.center,
+                padding=20,
+                expand=expand,
+            )
     
     def create_complex_container(self):
         """Crea el contenedor complejo con subcontenedores"""
@@ -44,42 +50,37 @@ class DashboardApp:
             expand=True,
             content=ft.Column(
                 controls=[
-
                     ft.Container(
                         content=ft.Row(
                             [
                                 ft.Text(
                                     "Dorsal",
                                     size=20,
-                                    weight=60,
+                                    weight=ft.FontWeight.W_600,  # Fixed: use proper FontWeight enum
                                     height=50,
-                                    color=ft.Colors.WHITE,
+                                    color=ft.Colors.BLACK,
                                     text_align=ft.TextAlign.CENTER,
-                                    bgcolor=ft.Colors.BLUE_300,
-                                    
                                 ),
                                 ft.Text(
                                     "Datos de Dorsal",
                                     size=20,
-                                    weight=1200,
+                                    weight=ft.FontWeight.BOLD,  # Fixed: use proper FontWeight enum
                                     height=50,
-                                    color=ft.Colors.WHITE,
-                                    bgcolor=ft.Colors.RED,
-                                    
+                                    color=ft.Colors.BLACK,
                                 ),
                             ],
                             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         ),
-                        # bgcolor=ft.Colors.BLUE_300,
-                        # border_radius=10,
-                        # height=100,
+                        bgcolor=ft.Colors.YELLOW_300,  # Added background color
+                        border_radius=10,
                         alignment=ft.alignment.center,
                         padding=10,
+                        height=100,
                         expand=True,
                     ),
                     ft.Container(
                         content=ft.Text(
-                            "Subcontenedor 3",
+                            "Patrocinadores",
                             size=16,
                             weight=ft.FontWeight.BOLD,
                             color=ft.Colors.WHITE,
@@ -87,7 +88,7 @@ class DashboardApp:
                         ),
                         bgcolor=ft.Colors.BLUE_200,
                         border_radius=10,
-                        height=400,
+                        height=370,
                         alignment=ft.alignment.center,
                         padding=10,
                         expand=True,
@@ -113,14 +114,23 @@ class DashboardApp:
                     expand=False
                 ),
                 # Cronómetro
-                self.create_container(
-                    "Cronometro", 
-                    ft.Colors.RED_700, 
-                    height=150,
+               self.create_container(
+                    Cronometro(
+                        start_time=datetime.now(),  # Para nueva sesión
+                        box_style= {
+                                "bgcolor": ft.Colors.RED_400, "border_radius": 10, "padding": 5,
+                                "width": 200, "height": 180, "alignment": ft.alignment.center,
+                        },
+                        tam_text=100,
+                        # start_time=datetime(2024, 1, 1, 12, 0, 0),  # Para recuperar estado
+                ), 
+                    ft.Colors.TRANSPARENT, 
+                    width=200,
+                    height=180
                 )
             ],
-            spacing=10,
-            expand=True
+            spacing=5,
+            expand=False
         )
         
         # Fila inferior       
@@ -128,7 +138,7 @@ class DashboardApp:
             controls=[
                 # Contenedor de la izquierda
                 self.create_container(
-                    "Contenedor Izquierdo", 
+                    "Imagenes camara", 
                     ft.Colors.GREEN_700, 
                     width=450, 
                     height=500,
