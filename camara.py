@@ -57,16 +57,3 @@ class Camara:
             time.sleep(0.03)  # ~30 FPS
 
         cap.release()
-
-def main(page: ft.Page):
-    page.title = "Flet + OpenCV Video"
-    page.padding = 20
-    page.theme_mode = "dark"
-
-    camara = Camara()
-    page.add(camara.build())
-
-    # Iniciar la cámara automáticamente en un hilo
-    threading.Thread(target=camara.capture_video, args=(page,), daemon=True).start()
-
-ft.app(target=main)
