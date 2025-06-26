@@ -3,10 +3,27 @@ from crono import Cronometro
 from datetime import datetime, timedelta
 from camara import Camara  # Asegúrate de que el módulo camara.py esté en el mismo directorio   
 
+imagenes_patrocinadores = [
+    ("assets/banner_pitma.png","https://pitma.es/"),
+    ("assets/banner_artipublic.png","https://www.artipubli.com/"),
+    ("assets/banner_andros.png","https://androsvegetal.es/"),
+    ("assets/banner_bathco.png","https://www.thebathcollection.com/"),
+    ("assets/banner_lavin.png","https://www.almaceneslavin.com/"),
+    ("assets/banner_natuber.png","https://natuber.com/"),
+    ("assets/banner_rionansa.png","https://aytorionansa.com/"),
+    ("assets/banner_jvcosio.png","https://juntavecinalcosiorozadio.blogspot.com/"),
+    ("assets/banner_aljomar.png","https://www.aljomar.es/"),
+    ("assets/banner_grupochovi.png","https://www.chovi.com/es/"),
+    ("assets/banner_LIS.png","https://www.lisdatasolutions.com/es/"),
+    ("assets/banner_carandia.png","https://carandiadistribuciones.com/L"),
+]
+
+
+
 class DashboardApp:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.camara = Camara(width=700, height=700)  
+        # self.camara = Camara(width=700, height=700)  
         self.setup_page()
         self.build_ui()
     
@@ -54,55 +71,65 @@ class DashboardApp:
                 controls=[
                     ft.Container(
                         content=ft.Row(
-                            [
-                                ft.Text(
-                                    "Dorsal",
-                                    size=20,
-                                    weight=ft.FontWeight.W_600,  # Fixed: use proper FontWeight enum
-                                    height=50,
-                                    color=ft.Colors.BLACK,
-                                    text_align=ft.TextAlign.CENTER,
-                                ),
-                                ft.Text(
-                                    "Datos de Dorsal",
-                                    size=20,
-                                    weight=ft.FontWeight.BOLD,  # Fixed: use proper FontWeight enum
-                                    height=50,
-                                    color=ft.Colors.BLACK,
+                            [                               
+                                self.create_container("", ft.Colors.BLUE_ACCENT, width=250, height=150, expand=False),
+                                
+                                self.create_container(
+                                    content 
+                                    ft.Colors.BLUE_ACCENT,
+                                    width=250,
+                                    height=150,
+                                    expand=False
                                 ),
                             ],
-                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            # alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         ),
                         bgcolor=ft.Colors.YELLOW_300,  # Added background color
                         border_radius=10,
                         alignment=ft.alignment.center,
                         padding=10,
-                        height=100,
-                        expand=True,
+                        height=180,
                     ),
+                                        
                     ft.Row(
                         controls=[
-                            ft.Image(src="assets/banner_andros.png", width=100, height=100),
-                            ft.Image(src="assets/banner_artipublic.png", width=100, height=100),
-                            ft.Image(src="assets/banner_carandia.png", width=100, height=100),    
+                            ft.Image(src=imagenes_patrocinadores[0][0], width=270, height=170),
+                            ft.Image(src=imagenes_patrocinadores[1][0], width=270, height=170),
+                            ft.Image(src=imagenes_patrocinadores[2][0], width=270, height=170),    
                         ],
-                        spacing=10,
                         alignment=ft.MainAxisAlignment.CENTER,
                     ),
 
                     ft.Row(
                         controls=[
-                            ft.Image(src="assets/banner_grupochovi.png", width=100, height=100),
-                            ft.Image(src="assets/banner_jvcosio.png", width=100, height=100),
-                            ft.Image(src="assets/banner_LIS.png", width=100, height=100),    
+                            ft.Image(src=imagenes_patrocinadores[3][0], width=270, height=170),
+                            ft.Image(src=imagenes_patrocinadores[4][0], width=270, height=170),
+                            ft.Image(src=imagenes_patrocinadores[5][0], width=270, height=170),    
                         ],
-                        spacing=10,
+                        alignment=ft.MainAxisAlignment.CENTER,
+                    ),
+                    ft.Row(
+                        controls=[
+                            ft.Image(src=imagenes_patrocinadores[6][0], width=270, height=170),
+                            ft.Image(src=imagenes_patrocinadores[7][0], width=270, height=170),
+                            ft.Image(src=imagenes_patrocinadores[8][0], width=270, height=170),    
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                    ),
+                    ft.Row(
+                        controls=[
+                            ft.Image(src=imagenes_patrocinadores[9][0], width=270, height=170),
+                            ft.Image(src=imagenes_patrocinadores[10][0], width=270, height=170),
+                            ft.Image(src=imagenes_patrocinadores[11][0], width=270, height=170),    
+                        ],
                         alignment=ft.MainAxisAlignment.CENTER,
                     ),
                 
                 
-                ]
+                ],
+                spacing=20
             )
+            
         )
     
     def build_ui(self):
@@ -143,7 +170,12 @@ class DashboardApp:
         inf_fila = ft.Row(
             controls=[
                 # Contenedor de la izquierda
-                self.camara.video_container,
+                # self.camara.video_container,
+                self.create_container(
+                    "Cámara", 
+                    ft.Colors.GREEN_700, 
+                    expand=True
+                ),
                 self.create_complex_container()
             ],
             alignment=ft.MainAxisAlignment.CENTER,
@@ -158,6 +190,7 @@ class DashboardApp:
             ],
             alignment=ft.MainAxisAlignment.START,
             horizontal_alignment=ft.CrossAxisAlignment.START,
+            expand=True,
             spacing=10,
         )
         
@@ -170,7 +203,7 @@ def main(page: ft.Page):
     app = DashboardApp(page)
     # Iniciar la cámara automáticamente en un hilo
     import threading
-    threading.Thread(target=app.camara.capture_video, args=(page,), daemon=True).start()
+    # threading.Thread(target=app.camara.capture_video, args=(page,), daemon=True).start()
 
 if __name__ == "__main__":
     ft.app(target=main)
