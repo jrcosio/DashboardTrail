@@ -23,7 +23,15 @@ imagenes_patrocinadores = [
 class DashboardApp:
     def __init__(self, page: ft.Page):
         self.page = page
+        self.page.bgcolor = "#333333"
         # self.camara = Camara(width=700, height=700)  
+        
+        # Definir atributos del atleta ANTES de construir la UI
+        self.nombreAtleta = "David"
+        self.apellidoAtleta = "GONZALEZ RUIZ"
+        self.CategoriaAtleta = "Senior"
+        self.tiempoAtleta = timedelta(hours=0, minutes=0, seconds=0)  # Tiempo inicial del atleta
+        
         self.setup_page()
         self.build_ui()
     
@@ -72,14 +80,21 @@ class DashboardApp:
                     ft.Container(
                         content=ft.Row(
                             [                               
-                                self.create_container("", ft.Colors.BLUE_ACCENT, width=250, height=150, expand=False),
-                                
-                                self.create_container(
-                                    content 
-                                    ft.Colors.BLUE_ACCENT,
-                                    width=250,
-                                    height=150,
-                                    expand=False
+                                self.create_container("", color= ft.Colors.BLUE_ACCENT, width=250, expand=False),
+                                ft.Container(
+                                    content=ft.Column(
+                                        controls=[
+                                            ft.Text(f"{self.nombreAtleta} {self.apellidoAtleta}", size=40, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD),
+                                            ft.Text(f"{self.tiempoAtleta}", size=60, color=ft.Colors.WHITE)                                    
+                                        ],
+                                        alignment=ft.MainAxisAlignment.CENTER,
+                                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                                    ),
+                                    alignment=ft.alignment.center,
+                                    padding=10,
+                                    expand=True,
+                                    bgcolor=ft.Colors.BLUE_ACCENT,
+                                    border_radius=10,
                                 ),
                             ],
                             # alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
