@@ -1,10 +1,12 @@
 import flet as ft
 from crono import Cronometro
 from datetime import datetime, timedelta
+from camara import Camara  # Asegúrate de que el módulo camara.py esté en el mismo directorio   
 
 class DashboardApp:
     def __init__(self, page: ft.Page):
         self.page = page
+        self.camara = Camara(width=700, height=700)  
         self.setup_page()
         self.build_ui()
     
@@ -78,25 +80,29 @@ class DashboardApp:
                         height=100,
                         expand=True,
                     ),
-                    ft.Container(
-                        content=ft.Text(
-                            "Patrocinadores",
-                            size=16,
-                            weight=ft.FontWeight.BOLD,
-                            color=ft.Colors.WHITE,
-                            text_align=ft.TextAlign.CENTER,
-                        ),
-                        bgcolor=ft.Colors.BLUE_200,
-                        border_radius=10,
-                        height=370,
-                        alignment=ft.alignment.center,
-                        padding=10,
-                        expand=True,
+                    ft.Row(
+                        controls=[
+                            ft.Image(src="assets/banner_andros.png", width=100, height=100),
+                            ft.Image(src="assets/banner_artipublic.png", width=100, height=100),
+                            ft.Image(src="assets/banner_carandia.png", width=100, height=100),    
+                        ],
+                        spacing=10,
+                        alignment=ft.MainAxisAlignment.CENTER,
                     ),
-                ],
-                spacing=10,
-                alignment=ft.MainAxisAlignment.CENTER,
-            ),
+
+                    ft.Row(
+                        controls=[
+                            ft.Image(src="assets/banner_grupochovi.png", width=100, height=100),
+                            ft.Image(src="assets/banner_jvcosio.png", width=100, height=100),
+                            ft.Image(src="assets/banner_LIS.png", width=100, height=100),    
+                        ],
+                        spacing=10,
+                        alignment=ft.MainAxisAlignment.CENTER,
+                    ),
+                
+                
+                ]
+            )
         )
     
     def build_ui(self):
@@ -118,15 +124,15 @@ class DashboardApp:
                     Cronometro(
                         start_time=datetime.now(),  # Para nueva sesión
                         box_style= {
-                                "bgcolor": ft.Colors.RED_400, "border_radius": 10, "padding": 5,
-                                "width": 200, "height": 180, "alignment": ft.alignment.center,
+                                "bgcolor": ft.Colors.BLUE_300, "border_radius": 10, "padding": 5,
+                                "width": 200, "height": 250, "alignment": ft.alignment.center,
                         },
                         tam_text=100,
                         # start_time=datetime(2024, 1, 1, 12, 0, 0),  # Para recuperar estado
                 ), 
                     ft.Colors.TRANSPARENT, 
                     width=200,
-                    height=180
+                    height=190
                 )
             ],
             spacing=5,
@@ -137,14 +143,7 @@ class DashboardApp:
         inf_fila = ft.Row(
             controls=[
                 # Contenedor de la izquierda
-                self.create_container(
-                    "Imagenes camara", 
-                    ft.Colors.GREEN_700, 
-                    width=450, 
-                    height=500,
-                    expand=True
-                ),
-                # Contenedor del medio (complejo)
+                self.camara.video_container,
                 self.create_complex_container()
             ],
             alignment=ft.MainAxisAlignment.CENTER,
@@ -169,6 +168,9 @@ class DashboardApp:
 def main(page: ft.Page):
     """Función principal de la aplicación"""
     app = DashboardApp(page)
+    # Iniciar la cámara automáticamente en un hilo
+    import threading
+    threading.Thread(target=app.camara.capture_video, args=(page,), daemon=True).start()
 
 if __name__ == "__main__":
     ft.app(target=main)
