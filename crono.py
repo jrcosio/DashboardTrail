@@ -14,7 +14,7 @@ class Cronometro(ft.Container):
         minutes_style=None,
         seconds_style=None,
         # milliseconds_style=None,
-        tam_text=80,
+        tam_text=60,
         label_style=None,
         box_style=None,
         # --- Parámetros para la responsividad ---
@@ -31,14 +31,14 @@ class Cronometro(ft.Container):
         self.max_time = max_time  # Tiempo máximo en segundos (opcional)
         
         # --- Estilos ---
-        self._hours_style = hours_style or ft.TextStyle(size=tam_text, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK)
-        self._minutes_style = minutes_style or ft.TextStyle(size=tam_text, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK)
-        self._seconds_style = seconds_style or ft.TextStyle(size=tam_text, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK)
+        self._hours_style = hours_style or ft.TextStyle(size=tam_text, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
+        self._minutes_style = minutes_style or ft.TextStyle(size=tam_text, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
+        self._seconds_style = seconds_style or ft.TextStyle(size=tam_text, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
         # self._milliseconds_style = milliseconds_style or ft.TextStyle(size=tam_text, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE70)
-        self._label_style = label_style or ft.TextStyle(size=30, color=ft.Colors.BLACK)
+        self._label_style = label_style or ft.TextStyle(size=24, color=ft.Colors.WHITE)
         self._box_style = box_style or {
             "bgcolor": ft.Colors.GREEN_400, "border_radius": 10, "padding": 10,
-            "width": 200, "height": 150, "alignment": ft.alignment.center,
+            "width": 100, "height": 130, "alignment": ft.alignment.center,
         }
         
         # Estilo especial para milisegundos (más pequeño)
@@ -51,17 +51,17 @@ class Cronometro(ft.Container):
         self.seconds_text = ft.Text("00", style=self._seconds_style)
         # self.milliseconds_text = ft.Text("000", style=self._milliseconds_style)
         
-        # self.hours_label = ft.Text("Horas", style=self._label_style)
-        # self.minutes_label = ft.Text("Minutos", style=self._label_style)
-        # self.seconds_label = ft.Text("Segundos", style=self._label_style)
+        self.hours_label = ft.Text("Horas", style=self._label_style)
+        self.minutes_label = ft.Text("Minutos", style=self._label_style)
+        self.seconds_label = ft.Text("Segundos", style=self._label_style)
         # self.milliseconds_label = ft.Text("Milisegundos", style=self._label_style)
         
         # --- Contenedores ---
-        def create_box(text_control, box_style=None):
+        def create_box(text_control, label_control, box_style=None):
             style = box_style or self._box_style
             return ft.Container(
                 content=ft.Column(
-                    [text_control],
+                    [text_control, label_control],
                     alignment=ft.MainAxisAlignment.CENTER,
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     spacing=0
@@ -69,15 +69,15 @@ class Cronometro(ft.Container):
                 **style
             )
         
-        self.hours_box = create_box(self.hours_text)
-        self.minutes_box = create_box(self.minutes_text)
-        self.seconds_box = create_box(self.seconds_text)
+        self.hours_box = create_box(self.hours_text, self.hours_label)
+        self.minutes_box = create_box(self.minutes_text, self.minutes_label)
+        self.seconds_box = create_box(self.seconds_text, self.seconds_label)
         # self.milliseconds_box = create_box(self.milliseconds_text, self.milliseconds_label, self._ms_box_style)
         
         self.content = ft.Row(
             [self.hours_box, self.minutes_box, self.seconds_box],
             alignment=ft.MainAxisAlignment.CENTER,
-            spacing=20
+            spacing=40
         )
         
         # --- Lógica de hilos ---

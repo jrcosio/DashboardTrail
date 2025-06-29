@@ -24,6 +24,7 @@ class DashboardApp:
     def __init__(self, page: ft.Page):
         self.page = page
         self.page.bgcolor = "#333333"
+  
         # self.camara = Camara(width=700, height=700)  
         
         # Definir atributos del atleta ANTES de construir la UI
@@ -167,14 +168,14 @@ class DashboardApp:
                         start_time=datetime.now(),  # Para nueva sesión
                         box_style= {
                                 "bgcolor": ft.Colors.BLUE_300, "border_radius": 10, "padding": 5,
-                                "width": 200, "height": 250, "alignment": ft.alignment.center,
+                                "width": 300, "height": 300, "alignment": ft.alignment.center,
                         },
-                        tam_text=100,
+                        tam_text=180,
                         # start_time=datetime(2024, 1, 1, 12, 0, 0),  # Para recuperar estado
                 ), 
                     ft.Colors.TRANSPARENT, 
                     width=200,
-                    height=190
+                    height=400
                 )
             ],
             spacing=5,
