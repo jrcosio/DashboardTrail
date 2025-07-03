@@ -1,7 +1,8 @@
 import flet as ft
-from crono import Cronometro
+import threading
+from utils.crono import Cronometro
 from datetime import datetime, timedelta
-from camara import Camara  # Asegúrate de que el módulo camara.py esté en el mismo directorio   
+from camara import Camara  
 
 imagenes_patrocinadores = [
     ("assets/banner_pitma.png","https://pitma.es/"),
@@ -15,7 +16,7 @@ imagenes_patrocinadores = [
     ("assets/banner_aljomar.png","https://www.aljomar.es/"),
     ("assets/banner_grupochovi.png","https://www.chovi.com/es/"),
     ("assets/banner_LIS.png","https://www.lisdatasolutions.com/es/"),
-    ("assets/banner_carandia.png","https://carandiadistribuciones.com/L"),
+    ("assets/banner_carandia.png","https://carandiadistribuciones.com/"),
 ]
 
 
@@ -24,8 +25,8 @@ class DashboardApp:
     def __init__(self, page: ft.Page):
         self.page = page
         self.page.bgcolor = "#333333"
-  
-        # self.camara = Camara(width=700, height=700)  
+        
+        self.camara = Camara(width=float("inf"), height=float("inf"))  # Ajustar el ancho y alto de la cámara
         
         # Definir atributos del atleta ANTES de construir la UI
         self.nombreAtleta = "David"
@@ -44,6 +45,33 @@ class DashboardApp:
         self.page.spacing = 20
         self.page.window.width = 1200
         self.page.window.height = 800
+        
+        self.cronometro = Cronometro()
+        
+        self.btn_start = ft.ElevatedButton(
+            "INICIAR",
+            on_click=lambda e: self.iniciar_cronometro(),
+            bgcolor=ft.Colors.GREEN,
+            color=ft.Colors.WHITE,
+            width=200,
+            height=100,
+            icon=ft.Icons.PLAY_ARROW,
+        )
+        self.estado_camara = False
+        # Crear un switch para activar/desactivar la cámara
+        self.sw_camara = ft.Switch(
+            value=self.estado_camara,
+            label="Iniciar camara con visión artificial",
+            on_change=lambda e: self.iniciar_camara(),
+        )
+        
+        # self.btn_start = ft.IconButton(
+        #     icon=ft.Icons.PLAY_ARROW,
+        #     icon_size=100,
+        #     tooltip="Iniciar Cronómetro",
+        #     on_click=lambda e: self.cronometro.start(),
+        #     icon_color=ft.Colors.GREEN_700,
+        # )
         
     def create_container(self, content, color: str, width: int = None, height: int = None, expand: bool = True):
         """Crea un contenedor con texto centrado"""
@@ -112,30 +140,34 @@ class DashboardApp:
                             ft.Image(src=imagenes_patrocinadores[0][0], width=270, height=170),
                             ft.Image(src=imagenes_patrocinadores[1][0], width=270, height=170),
                             ft.Image(src=imagenes_patrocinadores[2][0], width=270, height=170),    
+                            ft.Image(src=imagenes_patrocinadores[3][0], width=270, height=170),
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                     ),
 
                     ft.Row(
                         controls=[
-                            ft.Image(src=imagenes_patrocinadores[3][0], width=270, height=170),
                             ft.Image(src=imagenes_patrocinadores[4][0], width=270, height=170),
-                            ft.Image(src=imagenes_patrocinadores[5][0], width=270, height=170),    
+                            ft.Image(src=imagenes_patrocinadores[5][0], width=270, height=170),
+                            ft.Image(src=imagenes_patrocinadores[6][0], width=270, height=170),   
+                            ft.Image(src=imagenes_patrocinadores[7][0], width=270, height=170), 
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                     ),
                     ft.Row(
                         controls=[
-                            ft.Image(src=imagenes_patrocinadores[6][0], width=270, height=170),
-                            ft.Image(src=imagenes_patrocinadores[7][0], width=270, height=170),
-                            ft.Image(src=imagenes_patrocinadores[8][0], width=270, height=170),    
-                        ],
-                        alignment=ft.MainAxisAlignment.CENTER,
-                    ),
-                    ft.Row(
-                        controls=[
+                            ft.Image(src=imagenes_patrocinadores[8][0], width=270, height=170),
                             ft.Image(src=imagenes_patrocinadores[9][0], width=270, height=170),
-                            ft.Image(src=imagenes_patrocinadores[10][0], width=270, height=170),
+                            ft.Image(src=imagenes_patrocinadores[10][0], width=270, height=170),   
+                            ft.Image(src=imagenes_patrocinadores[11][0], width=270, height=170), 
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                    ),
+                    ft.Row(
+                        controls=[
+                            ft.Image(src=imagenes_patrocinadores[11][0], width=270, height=170),
+                            ft.Image(src=imagenes_patrocinadores[11][0], width=270, height=170),
+                            ft.Image(src=imagenes_patrocinadores[11][0], width=270, height=170),    
                             ft.Image(src=imagenes_patrocinadores[11][0], width=270, height=170),    
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
@@ -155,41 +187,66 @@ class DashboardApp:
         top_row = ft.Row(
             controls=[
                 # Logo
-                self.create_container(
-                    "LOGO", 
-                    ft.Colors.RED_700, 
-                    width=300, 
-                    height=150,
-                    expand=False
+                ft.Container(
+                    content=ft.Image(
+                        src="assets/logo.png",
+                        expand=True,
+                        fit=ft.ImageFit.CONTAIN,
+                    ),
+                    width=1100,
+                    height=330,
+                    border_radius=ft.border_radius.all(20),
+                    clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
+                    bgcolor=ft.Colors.RED_700,
                 ),
+                
                 # Cronómetro
-               self.create_container(
-                    Cronometro(
-                        start_time=datetime.now(),  # Para nueva sesión
-                        box_style= {
-                                "bgcolor": ft.Colors.BLUE_300, "border_radius": 10, "padding": 5,
-                                "width": 300, "height": 300, "alignment": ft.alignment.center,
-                        },
-                        tam_text=180,
-                        # start_time=datetime(2024, 1, 1, 12, 0, 0),  # Para recuperar estado
-                ), 
-                    ft.Colors.TRANSPARENT, 
+                self.create_container(
+                    content = self.cronometro,
+                    color = ft.Colors.TRANSPARENT, 
                     width=200,
-                    height=400
-                )
+                    height=400, expand=True
+                ),
+                # Botón de inicio del cronómetro
+                self.btn_start,
+                
             ],
             spacing=5,
-            expand=False
+            expand=False,
         )
         
         # Fila inferior       
         inf_fila = ft.Row(
             controls=[
                 # Contenedor de la izquierda
-                # self.camara.video_container,
+                
                 self.create_container(
-                    "Cámara", 
-                    ft.Colors.GREEN_700, 
+                    content = ft.Column(
+                        spacing=0,
+                        controls=[
+                            ft.Text("🏁 IA META 2.0", size=50, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD),
+                            self.sw_camara,
+                            # Mostrar el contenedor de la cámara solo si está activa
+                            self.create_container(
+                                self.camara.video_container, 
+                                color=ft.Colors.GREEN_700, 
+                                expand=True
+                            ) if self.estado_camara else ft.Container(
+                                content=ft.Text(
+                                    "Cámara desactivada",
+                                    size=20,
+                                    color=ft.Colors.WHITE54,
+                                    text_align=ft.TextAlign.CENTER
+                                ),
+                                expand=True,
+                                alignment=ft.alignment.center
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                      
+                    color = ft.Colors.GREEN_700, 
                     expand=True
                 ),
                 self.create_complex_container()
@@ -214,11 +271,42 @@ class DashboardApp:
         self.page.add(main_layout)
         self.page.update()
 
+    def rebuild_ui(self):
+        """Reconstruye la interfaz de usuario"""
+        # Limpiar la página
+        self.page.controls.clear()
+        
+        # Reconstruir la interfaz
+        self.build_ui()
+    
+    def iniciar_camara(self):
+        """Inicia/detiene la cámara en un hilo separado"""
+        if not self.estado_camara:
+            print("Iniciando cámara...")
+            threading.Thread(target=self.camara.capture_video, args=(self.page,), daemon=True).start()
+            self.estado_camara = True
+        else:
+            print("Deteniendo cámara...")
+            self.estado_camara = False
+        
+        # Reconstruir la interfaz para mostrar/ocultar la cámara
+        self.rebuild_ui()
+        self.page.update()
+        
+    def iniciar_cronometro(self):
+        """Inicia el cronómetro"""
+        # self.btn_start.disabled = True
+        # self.btn_start.visible = False
+        self.btn_start.text = "Refrescar"
+        tiempo_inicio = self.cronometro.start()
+        print(f"Cronómetro iniciado a las: {tiempo_inicio}")
+        self.page.update()
+
 def main(page: ft.Page):
     """Función principal de la aplicación"""
     app = DashboardApp(page)
     # Iniciar la cámara automáticamente en un hilo
-    import threading
+    # import threading
     # threading.Thread(target=app.camara.capture_video, args=(page,), daemon=True).start()
 
 if __name__ == "__main__":

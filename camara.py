@@ -17,7 +17,7 @@ class Camara:
         self.video_container = ft.Container(
             width=self.width,
             height=self.height,
-            border=ft.border.all(2, ft.Colors.WHITE),
+            #border=ft.border.all(2, ft.Colors.WHITE),
             border_radius=ft.border_radius.all(10),
             alignment=ft.alignment.center,
         )
@@ -30,14 +30,9 @@ class Camara:
         )
         self.video_container.content = self.img
 
-    def build(self):
-        return ft.Column([
-            # ft.Text('Prueba de OpenCV con Flet Proyecto David', size=24, weight="bold"),
-            self.video_container,
-        ], alignment=ft.MainAxisAlignment.CENTER)
-
+  
     def capture_video(self, page):
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(2)
         if not cap.isOpened():
             print("Error: No se pudo abrir la cámara.")
             return
