@@ -17,6 +17,7 @@ imagenes_patrocinadores = [
     ("assets/banner_grupochovi.png","https://www.chovi.com/es/"),
     ("assets/banner_LIS.png","https://www.lisdatasolutions.com/es/"),
     ("assets/banner_carandia.png","https://carandiadistribuciones.com/"),
+    ("assets/banner_blancoj.png","https://www.google.com/"),
 ]
 
 
@@ -29,10 +30,8 @@ class DashboardApp:
         self.camara = Camara(width=float("inf"), height=float("inf"))  # Ajustar el ancho y alto de la cámara
         
         # Definir atributos del atleta ANTES de construir la UI
-        self.nombreAtleta = "David"
-        self.apellidoAtleta = "GONZALEZ RUIZ"
-        self.CategoriaAtleta = "Senior"
-        self.tiempoAtleta = timedelta(hours=0, minutes=0, seconds=0)  # Tiempo inicial del atleta
+        self.AtletaenMeta = ft.Text("", size=50, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD)
+        self.tiempoAtleta = ft.Text("", size=60, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD)
         
         self.setup_page()
         self.build_ui()
@@ -65,13 +64,22 @@ class DashboardApp:
             on_change=lambda e: self.iniciar_camara(),
         )
         
-        # self.btn_start = ft.IconButton(
-        #     icon=ft.Icons.PLAY_ARROW,
-        #     icon_size=100,
-        #     tooltip="Iniciar Cronómetro",
-        #     on_click=lambda e: self.cronometro.start(),
-        #     icon_color=ft.Colors.GREEN_700,
-        # )
+        self.imagen_dorsal = ft.Image(
+            src="",
+            width=200,
+            height=200,
+            fit=ft.ImageFit.CONTAIN,
+            border_radius=ft.border_radius.all(10),
+            
+        )
+        
+    def format_time_hms(self, td):
+        """Formatea un timedelta a formato HH:MM:SS"""
+        total_seconds = int(td.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
         
     def create_container(self, content, color: str, width: int = None, height: int = None, expand: bool = True):
         """Crea un contenedor con texto centrado"""
@@ -109,12 +117,12 @@ class DashboardApp:
                     ft.Container(
                         content=ft.Row(
                             [                               
-                                self.create_container("", color= ft.Colors.BLUE_ACCENT, width=250, expand=False),
+                                self.create_container(self.imagen_dorsal, color= ft.Colors.BLUE_ACCENT, width=250, expand=False),
                                 ft.Container(
                                     content=ft.Column(
                                         controls=[
-                                            ft.Text(f"{self.nombreAtleta} {self.apellidoAtleta}", size=40, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD),
-                                            ft.Text(f"{self.tiempoAtleta}", size=60, color=ft.Colors.WHITE)                                    
+                                            self.AtletaenMeta,
+                                            self.tiempoAtleta,                                    
                                         ],
                                         alignment=ft.MainAxisAlignment.CENTER,
                                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -132,7 +140,7 @@ class DashboardApp:
                         border_radius=10,
                         alignment=ft.alignment.center,
                         padding=10,
-                        height=180,
+                        height=250,
                     ),
                                         
                     ft.Row(
@@ -144,7 +152,6 @@ class DashboardApp:
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                     ),
-
                     ft.Row(
                         controls=[
                             ft.Image(src=imagenes_patrocinadores[4][0], width=270, height=170),
@@ -165,19 +172,16 @@ class DashboardApp:
                     ),
                     ft.Row(
                         controls=[
-                            ft.Image(src=imagenes_patrocinadores[11][0], width=270, height=170),
+                            ft.Image(src=imagenes_patrocinadores[12][0], width=270, height=170),
                             ft.Image(src=imagenes_patrocinadores[11][0], width=270, height=170),
                             ft.Image(src=imagenes_patrocinadores[11][0], width=270, height=170),    
                             ft.Image(src=imagenes_patrocinadores[11][0], width=270, height=170),    
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                     ),
-                
-                
                 ],
                 spacing=20
             )
-            
         )
     
     def build_ui(self):
@@ -295,11 +299,17 @@ class DashboardApp:
         
     def iniciar_cronometro(self):
         """Inicia el cronómetro"""
-        # self.btn_start.disabled = True
-        # self.btn_start.visible = False
+    
         self.btn_start.text = "Refrescar"
         tiempo_inicio = self.cronometro.start()
         print(f"Cronómetro iniciado a las: {tiempo_inicio}")
+        self.AtletaenMeta.value = f"{"023"} - {"Imanol"} {"CRUZ GARCÍA"}"
+        
+        self.imagen_dorsal.src = "assets/dorsal_prueba.png"  # Cambiar la imagen del dorsal
+        
+        self.tiempoAtleta.value = self.format_time_hms(self.cronometro.get_elapsed_time())
+
+        
         self.page.update()
 
 def main(page: ft.Page):

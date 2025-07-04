@@ -32,7 +32,7 @@ class Camara:
 
   
     def capture_video(self, page):
-        cap = cv2.VideoCapture(2)
+        cap = cv2.VideoCapture(0)
         if not cap.isOpened():
             print("Error: No se pudo abrir la cámara.")
             return
