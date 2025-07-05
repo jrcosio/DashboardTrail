@@ -23,7 +23,7 @@ class YoloDetector:
     
     def detect_and_draw(self, frame, line_coords=None, on_line_cross=None):
         # Hacer inferencia
-        results = self.model(frame, classes=[0])  # Solo clase 0
+        results = self.model(frame, classes=[0], conf=0.65)  # Solo clase 0
         
         # Dibujar bounding boxes y detectar cruces
         for result in results:
@@ -39,7 +39,7 @@ class YoloDetector:
                     cy = (y1 + y2) // 2
                     
                     # Dibujar centroide
-                    cv2.circle(frame, (cx, cy), 5, (255, 255, 0), -1)
+                    cv2.circle(frame, (cx, cy), 2, (255, 255, 0), -1)
                     
                     # Detectar cruce de línea
                     if line_coords and on_line_cross:
@@ -56,12 +56,12 @@ class YoloDetector:
                         self.previous_centroids[i] = current_side
                     
                     # Dibujar rectángulo
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 1)
                     
                     # Dibujar confianza
-                    label = f"Clase 0: {confidence:.2f}"
-                    cv2.putText(frame, label, (x1, y1-10), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    label = f"Dorsal: {confidence:.2f}"
+                    cv2.putText(frame, label, (x1, y1-5), 
+                              cv2.FONT_HERSHEY_PLAIN, 1, (0, 255, 0), 2)
         
         return frame
 
@@ -109,15 +109,15 @@ class Camara:
             if not ret:
                 break
             
-            # Dibujar línea de meta (responsabilidad de Camara)
-            if self.line_coords:
-                cv2.line(frame, (self.line_coords[0], self.line_coords[1]), 
-                        (self.line_coords[2], self.line_coords[3]), (255, 0, 0), 3)
-            
-            # Aplicar detección YOLO (solo detección y cruces)
+            # Aplicar detección YOLO en frame ORIGINAL (sin línea)
             frame_with_detections = self.yolo_detector.detect_and_draw(
-                frame, self.line_coords, self.on_line_cross_callback
+                frame.copy(), self.line_coords, self.on_line_cross_callback
             )
+            
+            # Dibujar línea de meta DESPUÉS (responsabilidad de Camara)
+            if self.line_coords:
+                cv2.line(frame_with_detections, (self.line_coords[0], self.line_coords[1]), 
+                        (self.line_coords[2], self.line_coords[3]), (255, 0, 0), 3)
             
             rgb_frame = cv2.cvtColor(frame_with_detections, cv2.COLOR_BGR2RGB)
             pil_img = Image.fromarray(rgb_frame)
@@ -129,3 +129,8 @@ class Camara:
             time.sleep(0.03)  # ~30 FPS
             
         cap.release()
+
+
+
+if __name__ == "__main__":
+    print("Este módulo no está diseñado para ejecutarse directamente.")

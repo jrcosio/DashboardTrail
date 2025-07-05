@@ -1,8 +1,13 @@
 import flet as ft
-import threading
+import threading, io, base64
 from utils.crono import Cronometro
 from datetime import datetime, timedelta
 from camara import Camara  
+from ocrDetector import OCRDetector  
+from PIL import Image
+from utils.TrailDataBase import TrailDataBase
+
+#v7
 
 imagenes_patrocinadores = [
     ("assets/banner_pitma.png","https://pitma.es/"),
@@ -18,6 +23,9 @@ imagenes_patrocinadores = [
     ("assets/banner_LIS.png","https://www.lisdatasolutions.com/es/"),
     ("assets/banner_carandia.png","https://carandiadistribuciones.com/"),
     ("assets/banner_blancoj.png","https://www.google.com/"),
+    ("assets/banner_hackcosio.png","https://www.hackcosio.com/"),
+    ("assets/banner_asocia.png","https://www.aytocosio.es/"),
+    ("assets/banner_TMBV.png","https://www.aytocosio.es/"),
 ]
 
 
@@ -29,11 +37,18 @@ class DashboardApp:
         
         # self.camara = Camara(width=float("inf"), height=float("inf"))  # Ajustar el ancho y alto de la cámara
         self.camara = Camara(width=float("inf"), height=float("inf"), line_coords=(0, 0, 450, 450), on_line_cross_callback=self.mi_callback_meta)  
+        self.ocr_detector = OCRDetector() 
         
         # Definir atributos del atleta ANTES de construir la UI
         self.AtletaenMeta = ft.Text("", size=50, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD)
         self.tiempoAtleta = ft.Text("", size=60, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD)
         self.cronometro = Cronometro()
+        
+        self.bd = TrailDataBase()
+        inscritos_lista = self.bd.obtener_inscritos_por_edicion(2025)
+        
+        self.inscritos_dict = {inscrito.dorsal: f"{inscrito.nombre} {inscrito.apellidos} - {inscrito.tipo_carrera}" 
+                          for inscrito in inscritos_lista}
         
         self.setup_page()
         self.build_ui()
@@ -175,9 +190,9 @@ class DashboardApp:
                     ft.Row(
                         controls=[
                             ft.Image(src=imagenes_patrocinadores[12][0], width=270, height=170),
-                            ft.Image(src=imagenes_patrocinadores[11][0], width=270, height=170),
-                            ft.Image(src=imagenes_patrocinadores[11][0], width=270, height=170),    
-                            ft.Image(src=imagenes_patrocinadores[11][0], width=270, height=170),    
+                            ft.Image(src=imagenes_patrocinadores[13][0], width=270, height=170),
+                            ft.Image(src=imagenes_patrocinadores[14][0], width=270, height=170),    
+                            ft.Image(src=imagenes_patrocinadores[15][0], width=270, height=170),    
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                     ),
@@ -230,7 +245,7 @@ class DashboardApp:
                     content = ft.Column(
                         spacing=0,
                         controls=[
-                            ft.Text("🏁 IA META 2.0", size=50, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD),
+                            ft.Text("🏁 IA META 2.0 🏁", size=50, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD),
                             self.sw_camara,
                             # Mostrar el contenedor de la cámara solo si está activa
                             self.create_container(
@@ -314,10 +329,40 @@ class DashboardApp:
         
         self.page.update()
         
+    def convert_image_to_base64(self, imagen):
+        pil_image = Image.fromarray(imagen)
+        buffered = io.BytesIO()
+        pil_image.save(buffered, format="PNG")
+        img_str = img_str = base64.b64encode(buffered.getvalue()).decode()
+        return img_str
+        
+        
     def mi_callback_meta(self, bbox_image):
-        # Aquí procesarías la imagen del bounding box
         print("¡Cruce detectado! Imagen capturada.")
-        # Más adelante aquí llamarías a tu clase de OCR
+        dorsal_detectado, dorsal_img= self.ocr_detector.detectar_dorsal(bbox_image)
+        
+        if dorsal_detectado:
+            print(f"Dorsal detectado: {dorsal_detectado}")
+            nombre_completo = self.inscritos_dict.get(dorsal_detectado, "")
+            # nombre_completo = self.inscritos_dict.pop(dorsal_detectado, "")
+
+            self.AtletaenMeta.value = f"{dorsal_detectado} - {nombre_completo}"
+            
+            self.tiempoAtleta.value = self.format_time_hms(self.cronometro.get_elapsed_time())
+            
+            self.imagen_dorsal.src_base64 = self.convert_image_to_base64(dorsal_img)  # Convertir imagen a base64
+            
+
+            
+        # else:
+        #     print("No se pudo detectar el dorsal.")
+        #     self.AtletaenMeta.value = "Dorsal no detectado"
+        #     self.imagen_dorsal.src = ""
+        
+        # Actualizar la UI
+        self.page.update()
+           
+   
 
 def main(page: ft.Page):
     """Función principal de la aplicación"""
