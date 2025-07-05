@@ -27,11 +27,13 @@ class DashboardApp:
         self.page = page
         self.page.bgcolor = "#333333"
         
-        self.camara = Camara(width=float("inf"), height=float("inf"))  # Ajustar el ancho y alto de la cámara
+        # self.camara = Camara(width=float("inf"), height=float("inf"))  # Ajustar el ancho y alto de la cámara
+        self.camara = Camara(width=float("inf"), height=float("inf"), line_coords=(0, 0, 450, 450), on_line_cross_callback=self.mi_callback_meta)  
         
         # Definir atributos del atleta ANTES de construir la UI
         self.AtletaenMeta = ft.Text("", size=50, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD)
         self.tiempoAtleta = ft.Text("", size=60, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD)
+        self.cronometro = Cronometro()
         
         self.setup_page()
         self.build_ui()
@@ -45,7 +47,7 @@ class DashboardApp:
         self.page.window.width = 1200
         self.page.window.height = 800
         
-        self.cronometro = Cronometro()
+        self.camara.set_line_coords(50, 300, 500, 400)  # Configurar coordenadas de la línea
         
         self.btn_start = ft.ElevatedButton(
             "INICIAR",
@@ -311,6 +313,11 @@ class DashboardApp:
 
         
         self.page.update()
+        
+    def mi_callback_meta(self, bbox_image):
+        # Aquí procesarías la imagen del bounding box
+        print("¡Cruce detectado! Imagen capturada.")
+        # Más adelante aquí llamarías a tu clase de OCR
 
 def main(page: ft.Page):
     """Función principal de la aplicación"""
