@@ -1,6 +1,6 @@
 import flet as ft
 from datetime import datetime, timedelta
-import threading
+import threading, os
 import time
 
 class Cronometro(ft.Container):
@@ -74,6 +74,31 @@ class Cronometro(ft.Container):
             ),
             **self.box_style
         )
+    def _guardar_fecha(self, fecha_param, archivo="fecha.txt"):
+        """
+        Guarda una fecha en un fichero. Si el fichero existe, usa la fecha del fichero.
+        
+        Args:
+            fecha_param (datetime): Fecha a guardar si el fichero no existe
+            archivo (str): Nombre del fichero (por defecto 'fecha.txt')
+        
+        Returns:
+            datetime: La fecha que se está usando (del fichero o del parámetro)
+        """
+        
+        if os.path.exists(archivo):
+            # El fichero existe, leer la fecha del fichero
+            with open(archivo, 'r') as f:
+                fecha_str = f.read().strip()
+                fecha_usada = datetime.fromisoformat(fecha_str)
+        else:
+            # El fichero no existe, guardar la fecha del parámetro
+            with open(archivo, 'w') as f:
+                f.write(fecha_param.isoformat())
+            fecha_usada = fecha_param
+        
+        return fecha_usada
+           
     
     def start(self):
         """
@@ -85,7 +110,7 @@ class Cronometro(ft.Container):
         if not self.is_running:
             # Si no hay start_time previo, crear uno nuevo
             if not self.start_time:
-                self.start_time = datetime.now()
+                self.start_time = self._guardar_fecha(datetime.now())
             
             self.is_running = True
             self.stop_event.clear()

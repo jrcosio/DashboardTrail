@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.exc import SQLAlchemyError
 import os
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -137,7 +137,7 @@ class TrailDataBase:
         """Getter para la sesión"""
         return self._session
     # ============== METODO ESPECIAL CARRERA INICIADA ==============
-    def Iniciar_Carrera(self) -> int:
+    def Iniciar_Carrera(self, tiempo_inicial) -> int:
         """
         Añade a la tabla `clasificacion` todos los inscritos cuya `edicion`
         coincida con el año actual (date.today().year).  
@@ -156,14 +156,15 @@ class TrailDataBase:
                 clasif = self.obtener_clasificacion_por_inscrito(ins.id, curr_year)
 
                 if clasif:
-                    # Ya estaba en la tabla → no necesitamos actualizar nada específico
-                    # El registro ya existe, simplemente contamos
-                    pass
+                    # Ya existe → actualizamos el tiempo parcial 1
+                    clasif.tiempo_p1 = tiempo_inicial
+                    clasif.finalizado = False
                 else:
                     # No existe → creamos nuevo objeto Clasificacion
                     nueva_clasif = Clasificacion(
                         id_inscrito = ins.id,
                         edicion     = curr_year,
+                        tiempo_p1   = tiempo_inicial,
                         finalizado  = False
                     )
                     self.insertar(nueva_clasif)
@@ -241,6 +242,19 @@ class TrailDataBase:
             ).first()
         except SQLAlchemyError as e:
             log.error(f"Error obteniendo inscrito por dorsal", exc_info=e)
+            return None
+        
+    def obtener_inscrito_por_dorsal_y_dni(self,dorsal, dni, edicion):
+        """Obtiene un inscrito por dorsal, dni y edición (comparación insensible a mayúsculas/minúsculas para DNI)"""
+        try:
+            from sqlalchemy import func
+            return self._session.query(Inscrito).filter(
+                Inscrito.dorsal == dorsal,
+                func.upper(Inscrito.numero_documento) == func.upper(dni),
+                Inscrito.edicion == edicion
+            ).first()
+        except SQLAlchemyError as e:
+            log.error(f"Error obteniendo inscrito por dorsal y dni", exc_info=e)
             return None
         
     def obtener_ultimo_dorsal(self, edicion, tipo_carrera):
@@ -366,6 +380,19 @@ class TrailDataBase:
             self._session.rollback()
             log.error(f"Error finalizando clasificación", exc_info=e)
             return False
+        
+    def obtener_clasificacion_por_inscrito(self, id_inscrito, edicion):
+        """Obtiene la clasificación de un inscrito por su ID y edición"""
+        try:
+            return self._session.query(Clasificacion).filter(
+                Clasificacion.id_inscrito == id_inscrito,
+                Clasificacion.edicion == edicion
+            ).first()
+        except SQLAlchemyError as e:
+            log.error(f"Error obteniendo clasificación por inscrito", exc_info=e)
+            return None
+        
+        
     # =================== UTILIDADES ===================
     
     def cerrar_conexion(self):
@@ -383,6 +410,23 @@ class TrailDataBase:
         except SQLAlchemyError as e:
             log.error(f"Error ejecutando query personalizada", exc_info=e)
             return []
+    
+    def normalizar_dnis_mayusculas(self):
+        """Convierte todos los números de documento a mayúsculas en la base de datos"""
+        try:
+            from sqlalchemy import func
+            # Actualizar todos los registros para que el numero_documento esté en mayúsculas
+            self._session.query(Inscrito).update(
+                {Inscrito.numero_documento: func.upper(Inscrito.numero_documento)},
+                synchronize_session=False
+            )
+            self._session.commit()
+            log.info("Todos los números de documento han sido convertidos a mayúsculas")
+            return True
+        except SQLAlchemyError as e:
+            self._session.rollback()
+            log.error(f"Error normalizando DNIs a mayúsculas", exc_info=e)
+            return False
 
 
 # =================== EJEMPLO DE USO ===================
@@ -391,6 +435,31 @@ if __name__ == "__main__":
     print("Iniciando conexión a la base de datos...\n\n\n\n")
     db = TrailDataBase()
     print("Conexión establecida.\n\n\n\n")
+    
+    # #genera un tiempo de llegada del dia 12 de julio de 2025 que se inicia a las 09:30 
+    # tiempo_llegada = datetime(2025, 7, 12, 9, 30) + timedelta(hours=3, minutes=25, seconds=12)
+    # db.finalizar_clasificacion_por_dorsal('002', tiempo_llegada, date.today().year)
+    
+    # tiempo_llegada = datetime(2025, 7, 12, 9, 30) + timedelta(hours=3, minutes=27, seconds=14)
+    # db.finalizar_clasificacion_por_dorsal('003', tiempo_llegada, date.today().year)
+    
+    # tiempo_llegada = datetime(2025, 7, 12, 9, 30) + timedelta(hours=3, minutes=30, seconds=30)
+    # db.finalizar_clasificacion_por_dorsal('004', tiempo_llegada, date.today().year)
+  
+    
+    
+    # db.Iniciar_Carrera()  # Inicia la carrera y añade inscritos a la clasificación
+    
+    # input("Presiona Enter para continuar y mostrar clasificaciones...\n\n\n\n")
+    # #mostrar clasificaciones de la edición actual
+    # clasificaciones = db.obtener_clasificaciones_por_edicion(date.today().year)
+    
+    # print(f"Clasificaciones de la edición {date.today().year}:")
+    # for clasif in clasificaciones:  
+    #     print(f"Dorsal: {clasif.inscrito.dorsal} | {clasif.inscrito.nombre} {clasif.inscrito.apellidos} | "
+    #           f"CCAA: {clasif.inscrito.ccaa} | Edición: {clasif.edicion} | "
+    #           f"Tiempo Final: {clasif.tiempo_final}, "
+    #           f"Tiempo P1: {clasif.tiempo_p1}, Finalizado: {clasif.finalizado}")
     
     # # Ejemplo de uso
     # try:
@@ -418,4 +487,3 @@ if __name__ == "__main__":
     # finally:
     #     # Cerrar conexión al finalizar
     #     db.cerrar_conexion()
-    

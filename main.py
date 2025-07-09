@@ -9,7 +9,51 @@ from camara_YOLO_full import Camara  # Importar el detector YOLO
 from ocrDetector import OCRDetector  
 from PIL import Image
 from utils.TrailDataBase import TrailDataBase
+from Terminal import Terminal
 
+from datetime import datetime
+import os
+import logging
+from logging.handlers import RotatingFileHandler
+
+def setup_logger():
+    # Crear directorio de logs si no existe
+    log_dir = "logs"
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    
+    # Configurar el logger
+    logger = logging.getLogger("DashboardTrail")
+    logger.setLevel(logging.DEBUG)
+    
+    # Crear formatter
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    # Handler para archivo con rotación
+    file_handler = RotatingFileHandler(
+        os.path.join(log_dir, "dashboard_trail.log"),
+        maxBytes=10*1024*1024,  # 10MB
+        backupCount=5
+    )
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+    
+    # Handler para consola
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(formatter)
+    
+    # Agregar handlers al logger
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+    
+    return logger
+
+# Inicializar logger
+log = setup_logger()
 #v7
 
 imagenes_patrocinadores = [
@@ -55,6 +99,9 @@ class DashboardApp:
         
         self.setup_page()
         self.build_ui()
+        
+        self.dorsal_teclado = None  
+        Terminal(self.mi_callback_dorsal_teclado).start()  # Iniciar terminal para recibir mensajes
     
     def setup_page(self):
         """Configuración inicial de la página"""
@@ -85,7 +132,7 @@ class DashboardApp:
         )
         
         self.imagen_dorsal = ft.Image(
-            src="",
+            src="assets/dorsal_prueba.png",  # Imagen de prueba
             width=200,
             height=200,
             fit=ft.ImageFit.CONTAIN,
@@ -318,17 +365,24 @@ class DashboardApp:
         self.page.update()
         
     def iniciar_cronometro(self):
-        """Inicia el cronómetro"""
-    
-        self.btn_start.text = "Refrescar"
-        tiempo_inicio = self.cronometro.start()
-        print(f"Cronómetro iniciado a las: {tiempo_inicio}")
-        self.AtletaenMeta.value = f"{"023"} - {"Imanol"} {"CRUZ GARCÍA"}"
-        
-        self.imagen_dorsal.src = "assets/dorsal_prueba.png"  # Cambiar la imagen del dorsal
-        
-        self.tiempoAtleta.value = self.format_time_hms(self.cronometro.get_elapsed_time())
-
+        """Inicia el cronómetro y la carrera en la base de datos"""
+        try:
+            # Iniciar cronómetro
+            tiempo_inicio = self.cronometro.start()
+            
+            # Iniciar carrera en la base de datos de manera segura
+            try:
+                total_corredores = self.bd.Iniciar_Carrera(tiempo_inicio)
+                log.info(f"Carrera iniciada exitosamente. Total de corredores: {total_corredores}")
+                self.btn_start.text = "Refrescar"
+            except Exception as db_error:
+                log.error(f"Error al iniciar carrera en la base de datos: {str(db_error)}")
+                # Aún así permitimos que el cronómetro funcione
+                self.btn_start.text = "Refrescar (BD Error)"
+                
+        except Exception as e:
+            log.error(f"Error al iniciar cronómetro: {str(e)}")
+            self.btn_start.text = "Error"
         
         self.page.update()
         
@@ -339,40 +393,74 @@ class DashboardApp:
         img_str = img_str = base64.b64encode(buffered.getvalue()).decode()
         return img_str
         
+    def mi_callback_dorsal_teclado(self, num_dorsal):
+        """Callback para manejar el evento de cruce de meta"""
+
+        self.dorsal_teclado = num_dorsal
         
+        nombre_completo = self.inscritos_dict.get(num_dorsal, "")
+
+        self.AtletaenMeta.value = f"{num_dorsal} - {nombre_completo}"
+            
+        tiempo_crono = self.cronometro.get_elapsed_time()
+        self.tiempoAtleta.value = self.format_time_hms(tiempo_crono)
+        
+        log.info(f"Atleta en meta: {num_dorsal} - {nombre_completo} - Tiempo: {self.tiempoAtleta.value}")
+        
+    def mi_callback_dorsal_teclado(self, num_dorsal):
+        """Callback para manejar el evento de cruce de meta"""
+
+        self.dorsal_teclado = num_dorsal
+        
+        nombre_completo = self.inscritos_dict.get(num_dorsal, "")
+
+        self.AtletaenMeta.value = f"{num_dorsal} - {nombre_completo}"
+            
+        tiempo_crono = self.cronometro.get_elapsed_time()
+        self.tiempoAtleta.value = self.format_time_hms(tiempo_crono)
+        
+        log.info(f"Atleta en meta: {num_dorsal} - {nombre_completo} - Tiempo: {self.tiempoAtleta.value}")
+        
+        # Convertir timedelta a timestamp sumándolo al tiempo de inicio
+        tiempo_final_timestamp = None
+        if self.cronometro.start_time:
+            tiempo_final_timestamp = self.cronometro.start_time + tiempo_crono
+            log.info(f"Tiempo final calculado: {tiempo_final_timestamp}")
+        else:
+            log.warning("El cronómetro no ha sido iniciado, no se puede calcular tiempo final")
+            
+        if tiempo_final_timestamp:
+            self.bd.finalizar_clasificacion_por_dorsal(
+                dorsal=num_dorsal,
+                tiempo_final=tiempo_final_timestamp,
+                edicion=2025,
+            )
+        else:
+            log.error("No se pudo guardar el tiempo final en la base de datos")
+        
+        self.page.update()
+
+        
+            
     def mi_callback_meta(self, bbox_image):
-        print("¡Cruce detectado! Imagen capturada.")
+        log.info("¡Cruce detectado! Imagen capturada.")
         dorsal_detectado, dorsal_img= self.ocr_detector.detectar_dorsal(bbox_image)
         
         if dorsal_detectado:
-            print(f"Dorsal detectado: {dorsal_detectado}")
-            nombre_completo = self.inscritos_dict.get(dorsal_detectado, "")
-            # nombre_completo = self.inscritos_dict.pop(dorsal_detectado, "")
-
-            self.AtletaenMeta.value = f"{dorsal_detectado} - {nombre_completo}"
-            
-            self.tiempoAtleta.value = self.format_time_hms(self.cronometro.get_elapsed_time())
-            
+            log.info(f"Dorsal detectado con IA: {dorsal_detectado}")
+            if self.dorsal_teclado == dorsal_detectado:
+                log.info(f"Dorsal {dorsal_detectado} ya registrado por teclado.")
             self.imagen_dorsal.src_base64 = self.convert_image_to_base64(dorsal_img)  # Convertir imagen a base64
-            
-
-            
-        # else:
-        #     print("No se pudo detectar el dorsal.")
-        #     self.AtletaenMeta.value = "Dorsal no detectado"
-        #     self.imagen_dorsal.src = ""
-        
-        # Actualizar la UI
+ 
         self.page.update()
-           
+    
+    
    
 
 def main(page: ft.Page):
     """Función principal de la aplicación"""
     app = DashboardApp(page)
-    # Iniciar la cámara automáticamente en un hilo
-    # import threading
-    # threading.Thread(target=app.camara.capture_video, args=(page,), daemon=True).start()
+
 
 if __name__ == "__main__":
     ft.app(target=main)
