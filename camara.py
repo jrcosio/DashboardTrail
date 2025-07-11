@@ -6,11 +6,22 @@ import threading
 from PIL import Image
 import io
 import base64
+import os
+import warnings
+import logging
+
+# Silenciar completamente YOLO
+os.environ['YOLO_VERBOSE'] = 'False'
+warnings.filterwarnings("ignore")
+
+# Configurar logging de ultralytics para que no muestre nada
+logging.getLogger('ultralytics').setLevel(logging.CRITICAL)
+
 from ultralytics import YOLO
 
 class YoloDetector:
-    def __init__(self, model_path="./modelosIA/dorsalesYolo11s.pt"):
-        self.model = YOLO(model_path)
+    def __init__(self, model_path="./modelosIA/dorsalesYolo11m.pt"):
+        self.model = YOLO(model_path, verbose=False)
         self.previous_centroids = {}  # Para trackear cruces de línea
     
     def _point_line_side(self, px, py, x1, y1, x2, y2):
@@ -22,8 +33,8 @@ class YoloDetector:
         return frame[y1:y2, x1:x2]
     
     def detect_and_draw(self, frame, line_coords=None, on_line_cross=None):
-        # Hacer inferencia
-        results = self.model(frame, classes=[0], conf=0.65)  # Solo clase 0
+        # Hacer inferencia de manera silenciosa
+        results = self.model(frame, classes=[0], conf=0.65, verbose=False)  # Solo clase 0
         
         # Dibujar bounding boxes y detectar cruces
         for result in results:

@@ -1,10 +1,19 @@
 import flet as ft
 import threading, io, base64
+import os
+import warnings
+import logging
+
+# Silenciar completamente YOLO antes de importar cualquier módulo que lo use
+os.environ['YOLO_VERBOSE'] = 'False'
+warnings.filterwarnings("ignore")
+logging.getLogger('ultralytics').setLevel(logging.CRITICAL)
+
 from utils.crono import Cronometro
 from datetime import datetime, timedelta
 from camara import Camara  
 
-from camara_YOLO_full import Camara  # Importar el detector YOLO
+# from camara_YOLO_full import Camara  # Importar el detector YOLO
 
 from ocrDetector import OCRDetector  
 from PIL import Image
@@ -12,8 +21,6 @@ from utils.TrailDataBase import TrailDataBase
 from Terminal import Terminal
 
 from datetime import datetime
-import os
-import logging
 from logging.handlers import RotatingFileHandler
 
 def setup_logger():
@@ -82,9 +89,9 @@ class DashboardApp:
         self.page = page
         self.page.bgcolor = "#333333"
         
-        self.camara = Camara(width=float("inf"), height=float("inf"))  # Ajustar el ancho y alto de la cámara
-        # self.camara = Camara(width=float("inf"), height=float("inf"), line_coords=(0, 0, 450, 450), on_line_cross_callback=self.mi_callback_meta)  
-        # self.ocr_detector = OCRDetector() 
+        # self.camara = Camara(width=float("inf"), height=float("inf"))  # Ajustar el ancho y alto de la cámara
+        self.camara = Camara(width=float("inf"), height=float("inf"), line_coords=(0, 0, 450, 450), on_line_cross_callback=self.mi_callback_meta)  
+        self.ocr_detector = OCRDetector() 
         
         # Definir atributos del atleta ANTES de construir la UI
         self.AtletaenMeta = ft.Text("", size=50, color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD)
@@ -112,8 +119,16 @@ class DashboardApp:
         self.page.window.width = 1200
         self.page.window.height = 800
         
-        # self.camara.set_line_coords(50, 300, 500, 400)  # Configurar coordenadas de la línea
         
+        #-------------------------------------------
+        #               LINEA DE META     
+        #-------------------------------------------
+        
+        self.camara.set_line_coords(50, 300, 500, 400)  # Configurar coordenadas de la línea
+        
+      
+   
+   
         self.btn_start = ft.ElevatedButton(
             "INICIAR",
             on_click=lambda e: self.iniciar_cronometro(),
@@ -443,8 +458,9 @@ class DashboardApp:
         
             
     def mi_callback_meta(self, bbox_image):
-        log.info("¡Cruce detectado! Imagen capturada.")
+    
         dorsal_detectado, dorsal_img= self.ocr_detector.detectar_dorsal(bbox_image)
+        print(dorsal_detectado)
         
         if dorsal_detectado:
             log.info(f"Dorsal detectado con IA: {dorsal_detectado}")

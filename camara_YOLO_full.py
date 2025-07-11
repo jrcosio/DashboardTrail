@@ -6,15 +6,27 @@ import threading
 from PIL import Image
 import io
 import base64
+import os
+import warnings
+import logging
+
+# Silenciar completamente YOLO
+os.environ['YOLO_VERBOSE'] = 'False'
+warnings.filterwarnings("ignore")
+
+# Configurar logging de ultralytics para que no muestre nada
+logging.getLogger('ultralytics').setLevel(logging.CRITICAL)
+
 from ultralytics import YOLO
 
 class YoloDetector:
     def __init__(self, model_path="./yolo11s.pt"):
-        self.model = YOLO(model_path)
+        # Cargar el modelo de manera silenciosa
+        self.model = YOLO(model_path, verbose=False)
     
     def detect_and_draw(self, frame):
-        # Hacer inferencia
-        results = self.model(frame, classes=[0])  # Solo clase 0
+        # Hacer inferencia de manera silenciosa
+        results = self.model(frame, classes=[0], verbose=False)  # Solo clase 0
         
         # Dibujar bounding boxes
         for result in results:
